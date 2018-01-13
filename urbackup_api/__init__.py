@@ -1,12 +1,7 @@
-import http.client as http
+import requests
 import json
-from urllib.parse import urlparse
-from urllib.parse import urlencode
-from base64 import b64encode
 import hashlib
-import socket
 import shutil
-import os
 import binascii
 import logging
 logger = logging.getLogger('urbackup-server-python-api-wrapper')
@@ -24,6 +19,10 @@ class urbackup_server:
     server_basic_username = ''
     server_basic_password = ''
     
+    _headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json; charset=UTF-8'
+        }
     
     _session=""
     
@@ -31,60 +30,16 @@ class urbackup_server:
 
     _lastlogid = 0
     
-    def _get_response(self, action, params, method="POST"):
-                
-        headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json; charset=UTF-8'
-        }
-        
-        if('server_basic_username' in globals() and len(self.server_basic_username)>0):
-            userAndPass = b64encode(str.encode(self.server_basic_username+":"+self.server_basic_password)).decode("ascii")
-            headers['Authorization'] = 'Basic %s' %  userAndPass
-        
-        curr_server_url=self._server_url+"?"+urlencode({"a": action});
-        
-        if(len(self._session)>0):
-            params["ses"]=self._session
-            
-        if method==None:
-            method = 'POST'
-        
-        if method=="GET":
-            curr_server_url+="&"+urlencode(params);
-        
-        target = urlparse(curr_server_url)
-            
-        if method=='POST':
-            body = urlencode(params)
-        else:
-            body = ''
-        
-        http_timeout = 10*60;
-        
-        if(target.scheme=='http'):
-            h = http.HTTPConnection(target.hostname, target.port, timeout=http_timeout)
-        elif(target.scheme=='https'):
-            h = http.HTTPSConnection(target.hostname, target.port, timeout=http_timeout)
-        else:
-            logger.error('Unkown scheme: '+target.scheme)
-            raise Exception("Unkown scheme: "+target.scheme)
-        
-        h.request(
-                method,
-                target.path+"?"+target.query,
-                body,
-                headers)
-        
-        return h.getresponse();
-    
     def _get_json(self, action, params = {}):     
         tries = 50
         
         while tries>0:
-            response = self._get_response(action, params)
+            if self._session:
+                params["ses"] = self._session
+            
+            response = requests.post(self._server_url + "x?a=" + action, data=params, headers=self._headers)
         
-            if(response.status == 200):
+            if(response.status_code == 200):
                 break
             
             tries=tries-1
@@ -93,21 +48,17 @@ class urbackup_server:
             else:
                 logger.error("API call failed. Retrying...")
         
-        data = response.read();
-                
-        response.close()
-            
-        return json.loads(data.decode("utf-8","ignore"))
+        return response.json()
     
     def _download_file(self, action, outputfn, params):
         
-        response = self.get_response(action, params, "GET");
+        # response = self.get_response(action, params, "GET");
         
-        if(response.status!=200):
-            return False
+        # if(response.status!=200):
+        #     return False
         
-        with open(outputfn, 'wb') as outputf:
-            shutil.copyfileobj(response, outputf)
+        # with open(outputfn, 'wb') as outputf:
+        #     shutil.copyfileobj(response, outputf)
             
         
         return True        
@@ -479,4 +430,17 @@ class urbackup_server:
             return False
         
         return True
+        
+    def get_backups(self, clientid):        
+        if not self.login():
+            return None
+        
+        ret = self._get_json("backups",
+                             {"clientid": clientid,
+                              "sa": "backups"})
+        
+        if not ret or not "backups" in ret:
+            return False
+        
+        return ret
         

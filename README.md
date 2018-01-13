@@ -1,11 +1,12 @@
 # urbackup-server-web-api-wrapper
-Python wrapper to access and control an UrBackup server
+Python2 wrapper to access and control an UrBackup server
+Based on the work of Martin Raiber
 
 ## Installation
 
 Install with:
 
-	pip3 install urbackup-server-web-api-wrapper
+	python setup.py install
 
 ## Usage
 
