@@ -444,3 +444,28 @@ class urbackup_server:
         
         return ret
         
+    def delete_backup(self, clientid, backupid):
+        if not self.login():
+            return None
+
+        ret = self._get_json("backups",
+                            {"clientid": clientid,
+                            "delete": backupid
+                            })
+
+        if not "backups" in ret:
+            return False
+        return ret
+
+    def delete_backup_now(self, clientid, backupid):
+        if not self.login():
+            return None
+
+        ret = self._get_json("backups",
+                            {"clientid": clientid,
+                            "delete_now": backupid
+                            })
+
+        if not "backups" in ret:
+            return False
+        return ret
