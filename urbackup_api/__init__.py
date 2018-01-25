@@ -450,7 +450,8 @@ class urbackup_server:
 
         ret = self._get_json("backups",
                             {"clientid": clientid,
-                            "delete": backupid
+                            "delete": backupid,
+                            "sa": "backups"
                             })
 
         if not "backups" in ret:
@@ -463,7 +464,8 @@ class urbackup_server:
 
         ret = self._get_json("backups",
                             {"clientid": clientid,
-                            "delete_now": backupid
+                            "delete_now": backupid,
+                            "sa": "backups"
                             })
 
         if not "backups" in ret:
