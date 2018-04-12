@@ -471,3 +471,17 @@ class urbackup_server:
         if not "backups" in ret:
             return False
         return ret
+
+    def unarchive_backup(self, clientid, backupid):
+        if not self.login():
+            return None
+
+        ret = self._get_json("backups",
+                            {"clientid": clientid,
+                            "unarchive": backupid,
+                            "sa": "backups"
+                            })
+
+        if not "backups" in ret:
+            return False
+        return ret
